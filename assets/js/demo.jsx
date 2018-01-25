@@ -2,49 +2,49 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Button } from 'reactstrap';
 
+// Set the card type and match number
+const uniqueCards = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
 export default function run_demo(root) {
-  ReactDOM.render(<Demo side={0}/>, root);
+  ReactDOM.render(<Demo />, root);
 }
 
 class Demo extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { side: props.side };
+    this.state = this.initialState();
   }
 
-  toggle(side) {
-    var side = +!this.state.side;
-    this.setState({side: side});
+  initialState() {
+    return {
+      cards: [],
+      moves: 0,
+      selected: [],
+    }
+  }
+
+  gameBoard() {
+    return (
+      <div id="gameBoard">
+        Hello Memory
+      </div>
+    )
+  }
+
+  restart() {
+    this.setState(this.initialState());
   }
 
   render() {
-    var toggle = this.toggle.bind(this);
+    const gameboard = this.gameBoard();
     return (
-      <div className="row">
-        <Side show={this.state.side == 0} toggle={toggle} />
-        <div className="col">
-          &nbsp;
+      <div>
+        <div className="endMsg"></div>
+        <div className="score">
+          <span>Score:  {this.state.moves}</span>
         </div>
-        <Side show={this.state.side == 1} toggle={toggle} />
+        {gameboard}
       </div>
     );
   }
 }
-
-function Side(params) {
-  if (params.show) {
-    return (
-      <div id="side-0" className="side col" onMouseOver={ () => params.toggle() }>
-        <Button onClick={ () => alert("cheater") }>Click Me</Button>
-      </div>
-    );
-  }
-  else {
-    return (
-      <div id="side-0" className="side col">
-        &nbsp;
-      </div>
-    );
-  }
-}
-
