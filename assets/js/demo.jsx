@@ -135,8 +135,10 @@ class Board extends React.Component {
         <div className="restart">
           <button onClick={this.restart}>Restart</button>
         </div>
+        <div className="score">
+          <span>Score: {200 - this.state.steps}</span>
+        </div>
         <div className="game">
-          <div className="score"><span>Score: {200 - this.state.steps}</span></div>
           {gameboard}
         </div>
       </div>
