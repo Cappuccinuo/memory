@@ -44,6 +44,7 @@ class Board extends React.Component {
       squares: this.shuffleDeck(),
       selected: [],
       pairs: [],
+      steps: 0,
     };
   }
 
@@ -59,6 +60,7 @@ class Board extends React.Component {
   }
 
   handleClick(i) {
+    this.setState({steps: this.state.steps + 1})
     if (this.state.selected.includes(i) || this.resetTime) {
       return;
     }
@@ -91,7 +93,15 @@ class Board extends React.Component {
     this.resetTime = null;
 
     if (this.state.pairs.length === this.state.squares.length) {
-      alert("win");
+      if (this.state.steps <= 50) {
+        alert("Good Job!");
+      }
+      else if (this.state.steps >= 50 && this.state.steps < 100) {
+        alert("Not Bad!");
+      }
+      else {
+        alert("Come on!");
+      }
     }
   }
 
@@ -126,12 +136,8 @@ class Board extends React.Component {
           <button onClick={this.restart}>Restart</button>
         </div>
         <div className="game">
-          <div className="game-board">
-            {gameboard}
-          </div>
-          <div className="game-info">
-            <div>{/* score */}</div>
-          </div>
+          <div className="score"><span>Score: {200 - this.state.steps}</span></div>
+          {gameboard}
         </div>
       </div>
     );

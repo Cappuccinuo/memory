@@ -30,8 +30,13 @@ h1 { text-align: center; }
   text-align: center;
 }
 
-.game-board {
-  margin: 0 auto;
+#gameBoard {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 90rem;
 }
 
 .game {
@@ -46,5 +51,21 @@ h1 { text-align: center; }
   flex-direction: row;
   flex-wrap: wrap;
   width: 60rem;
-  height: 36rem;
+  height: 40rem;
+}
+
+.score {
+  background: #28f;
+  border: 5px solid #fff;
+  border-radius: 55px;
+  color: #fff;
+  font-weight: bold;
+  height: 10rem;
+  width: 10rem;
+  position: absolute;
+  text-align: center;
+  line-height: 10rem;
+  right: 11rem;
+  top: 2.5rem;
+  z-index: 10;
 }
