@@ -4,11 +4,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Button } from 'reactstrap';
 
-// Set the card type and match number
-const uniqueCards = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
-export default function run_demo(root) {
-  ReactDOM.render(<Board/>, root);
+export default function run_demo(root, channel) {
+  ReactDOM.render(<MemoryGame channel={channel}/>, root);
 }
 
 class Square extends React.Component {
@@ -31,117 +28,74 @@ class Square extends React.Component {
   }
 }
 
-class Board extends React.Component {
+class MemoryGame extends React.Component {
   constructor(props) {
-    super(props);
-    this.restart = this.restart.bind(this);
+    super(props)
+    this.resetTime = null
+    this.state = {
+      show: [],       // The selected indices of cards
+      completed: [],  // The paired indices of cards
+      skel:[],        // Cards value based on indices,
+                      // "?" If not selected or pairs, otherwise show the value
+      step: 0,        // The click times so far
+    }
+    this.channel = props.channel;
+    this.channel.join()
+                .receive("ok", this.gotView.bind(this))
+                .receive("error", resp => {console.log("Unable to join", resp)});
+  }
+
+  gotView(view) {
+    console.log("New view", view);
+    this.setState(view.game);
+  }
+
+  sendGuess(i) {
+    if (!this.state.completed.includes(i) && !this.state.show.includes(i)) {
+      this.channel.push("guess", {"card": i})
+                  .receive("ok", this.gotView.bind(this));
+      if (this.resetTime) {
+        return;
+      }
+      if (this.state.show.length >= 1) {
+        this.resetTime = setTimeout(() => {
+          this.sendReset();
+        }, 500);
+      }
+    }
+  }
+
+  sendReset() {
+    this.channel.push("reset", {"clear": true})
+                .receive("ok", this.gotView.bind(this));
     this.resetTime = null;
-    this.state = this.initialState();
   }
 
-  initialState() {
-    return {
-      squares: this.shuffleDeck(),
-      selected: [],
-      pairs: [],
-      steps: 0,
-    };
-  }
-
-  restart() {
-    this.setState(this.initialState());
-  }
-
-  shuffleDeck() {
-    let deck = uniqueCards.slice();
-    deck = deck.concat(deck);
-    deck = _.shuffle(deck);
-    return deck;
-  }
-
-  handleClick(i) {
-    this.setState({steps: this.state.steps + 1})
-    if (this.state.selected.includes(i) || this.resetTime) {
-      return;
-    }
-    if (this.state.selected.length >= 1) {
-      this.resetTime = setTimeout(() => {
-        this.checkMatch();
-      }, 500);
-    }
-
-    let deck = this.state.squares;
-    const selected = this.state.selected.slice();
-    const squares = this.state.squares.slice();
-    squares[i] = deck[i];
-    this.state.selected.push(i);
-    this.setState({selected: this.state.selected});
-    this.setState({squares: squares});
-  }
-
-  checkMatch() {
-    let pairs = this.state.pairs;
-    const matchSelected = this.state.selected.map((i) => {
-      return this.state.squares[i];
-    });
-
-    if (matchSelected[0] == matchSelected[1]) {
-      pairs = pairs.concat(this.state.selected);
-    }
-
-    this.setState({selected: [], pairs: pairs});
-    this.resetTime = null;
-
-    if (this.state.pairs.length === this.state.squares.length) {
-      if (this.state.steps <= 50) {
-        alert("Good Job!");
-      }
-      else if (this.state.steps >= 50 && this.state.steps < 100) {
-        alert("Not Bad!");
-      }
-      else {
-        alert("Come on!");
-      }
-    }
-  }
-
-  renderSquare(i) {
-    return <Square
-      value={this.state.squares[i]}
-      onClick={() => this.handleClick(i)}/>;
-  }
-
-  gameBoard() {
-    return (
-      <div id="gameBoard">
-        {this.state.squares.map((card, i) => {
-          return <Square
-            value={this.state.squares[i]}
-            onClick={() => this.handleClick(i)}
-            isTurned={this.state.selected.includes(i)}
-            isMatch={this.state.pairs.includes(i)}
-            key={i}/>;
-        }, this)}
-      </div>
-    )
+  sendRestart() {
+    this.channel.push("restart", {"renew": true})
+                .receive("ok", this.gotView.bind(this));
   }
 
   render() {
-    const score = "Score: ";
-    const gameboard = this.gameBoard();
-
     return (
-      <div>
-        <div className="restart">
-          <button onClick={this.restart}>Restart</button>
-        </div>
-        <div className="score">
-          <span>Score: {200 - this.state.steps}</span>
-        </div>
-        <div className="game">
-          {gameboard}
-        </div>
+    <div>
+      <div className="restart">
+        <button className="button" onClick={() => this.sendRestart()}>Restart</button>
       </div>
+      <div className="score">
+        <span>Score: {200 - this.state.step}</span>
+      </div>
+      <div className="game">
+        {this.state.skel.map((card, i) => {
+          return <Square
+            value={card}
+            onClick={() => this.sendGuess(i)}
+            isTurned={this.state.show.includes(i)}
+            isMatch={this.state.completed.includes(i)}
+            key={i}/>;
+        }, this)}
+      </div>
+    </div>
     );
   }
 }
